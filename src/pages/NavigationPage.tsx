@@ -60,7 +60,7 @@ const NavigationPage = ({ level }: NavigationPageProps) => {
 
             {/* Fixed Breadcrumb for non-home pages */}
             {level !== 'home' && (
-                <div className="fixed top-6 left-6 z-50">
+                <div className="fixed top-6 z-50 left-1/2 -translate-x-1/2 md:left-6 md:translate-x-0 w-max max-w-[95%] md:w-auto md:max-w-none">
                     <Breadcrumb />
                 </div>
             )}
