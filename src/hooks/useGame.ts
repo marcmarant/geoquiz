@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { FeatureCollection } from 'geojson';
+import { findGamePath } from '../data/navigation';
 
 export interface GameState {
     score: number; // Count of found municipalities
@@ -41,27 +42,35 @@ export const useGame = (provinceId: string) => {
                 let data;
                 let bgData = null;
 
-                switch (provinceId) {
-                    case 'avila': data = await import('../data/municipios_avila.json'); break;
-                    case 'burgos': data = await import('../data/municipios_burgos.json'); break;
-                    case 'leon': data = await import('../data/municipios_leon.json'); break;
-                    case 'palencia': data = await import('../data/municipios_palencia.json'); break;
-                    case 'salamanca': data = await import('../data/municipios_salamanca.json'); break;
-                    case 'segovia': data = await import('../data/municipios_segovia.json'); break;
-                    case 'soria': data = await import('../data/municipios_soria.json'); break;
-                    case 'valladolid': data = await import('../data/municipios_valladolid.json'); break;
-                    case 'barrios_valladolid': data = await import('../data/barrios_valladolid.json'); break;
-                    case 'zamora': data = await import('../data/municipios_zamora.json'); break;
-                    case 'castilla_y_leon_provinces': data = await import('../data/provincias_castilla_y_leon.json'); break;
-                    case 'castilla_y_leon_cities':
-                        data = await import('../data/ciudades_castilla_y_leon.json');
-                        bgData = await import('../data/provincias_castilla_y_leon.json');
-                        break;
-                    default: throw new Error(`Province ${provinceId} not found`);
+                const gameInfo = findGamePath(provinceId);
+                if (!gameInfo || !gameInfo.regionId) {
+                    throw new Error(`Game path not found for ${provinceId}`);
                 }
 
-                const fc = data.default as unknown as FeatureCollection;
-                const bgFc = bgData ? (bgData.default as unknown as FeatureCollection) : null;
+                const regionId = gameInfo.regionId;
+                // Construct URL based on public folder structure: /europe/spain/<region>/<id>.json
+                // We must respect the BASE_URL defined in vite.config.ts (e.g. /geoquiz/)
+                const baseUrl = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
+                const url = `${baseUrl}europe/spain/${regionId}/${provinceId}.json`;
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`Failed to load map data: ${response.statusText}`);
+                data = await response.json();
+
+
+                // Special case for background data
+                if (provinceId === 'castile_and_leon_cities') {
+                    // Background is the provinces map
+                    // Located at /europe/spain/castile_and_leon/castile_and_leon_provinces.json
+                    const bgUrl = `${baseUrl}europe/spain/castile_and_leon/castile_and_leon_provinces.json`;
+                    const bgResponse = await fetch(bgUrl);
+                    if (bgResponse.ok) {
+                        bgData = await bgResponse.json();
+                    }
+                }
+
+                const fc = data as FeatureCollection;
+                const bgFc = bgData ? (bgData as FeatureCollection) : null;
 
                 // Normalize features to ensure they have a 'name' property
                 const normalizedFeatures = fc.features.map(f => {

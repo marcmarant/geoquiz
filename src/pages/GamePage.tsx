@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import MapGame from '../components/MapGame';
 import { useGame } from '../hooks/useGame';
 import { findGamePath } from '../data/navigation';
@@ -14,6 +14,7 @@ const formatTime = (ms: number) => {
 const GamePage = () => {
     // Route: /play/:gameId
     const { gameId } = useParams<{ gameId: string }>();
+    const navigate = useNavigate();
 
     // Pass 'gameId' as the ID to useGame
     const { geoData, backgroundData, gameState, handleGuess } = useGame(gameId!);
@@ -81,13 +82,13 @@ const GamePage = () => {
                         {/* Top Row: Back Button & Stats */}
                         <div className="w-full flex justify-between items-start pointer-events-auto">
                             {/* Left: Back Button */}
-                            <Link
-                                to="/"
+                            <button
+                                onClick={() => navigate(-1)}
                                 className="px-4 py-2 md:px-6 md:py-3 bg-slate-800/80 hover:bg-slate-700/90 backdrop-blur-md border border-white/10 rounded-xl text-white font-medium transition-all shadow-lg hover:shadow-xl flex items-center gap-2 text-sm md:text-base"
                             >
                                 <span>←</span>
                                 <span className="hidden sm:inline">Volver</span>
-                            </Link>
+                            </button>
 
                             {/* Right: Stats & Flag */}
                             <div className="flex items-center gap-2 md:gap-4">
